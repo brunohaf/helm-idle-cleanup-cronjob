@@ -1,0 +1,20 @@
+image:
+  repository: <docker-repo>/helm-iddle-cleanup-cronjob
+  tag: <tag>
+
+cronjob:
+  schedule: "0 10 * * 2"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+
+prometheus:
+  url: http://prometheus:9090
+
+email:
+  from: your-email@example.com
+  to: target-email@example.com
+  smtpServer: smtp.example.com
+  smtpPort: 587
+  smtpUsername: your-email@example.com
+  smtpPassword: your-password

@@ -1,0 +1,37 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: helm-iddle-cleanup-cronjob
+spec:
+  schedule: {{ .Values.cronjob.schedule }}
+  concurrencyPolicy: {{ .Values.cronjob.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: helm-iddle-cleanup-cronjob
+              image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: PROMETHEUS_URL
+                  value: {{ .Values.prometheus.url }}
+                - name: EMAIL_FROM
+                  value: {{ .Values.email.from }}
+                - name: EMAIL_TO
+                  value: {{ .Values.email.to }}
+                - name: SMTP_SERVER
+                  value: {{ .Values.email.smtpServer }}
+                - name: SMTP_PORT
+                  value: {{ .Values.email.smtpPort }}
+                - name: SMTP_USERNAME
+                  value: {{ .Values.email.smtpUsername }}
+                - name: SMTP_PASSWORD
+                  value: {{ .Values.email.smtpPassword }}
+              command:
+                - "python"
+              args:
+                - "helm_iddle_cleaner.py"
