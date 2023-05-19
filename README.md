@@ -12,4 +12,4 @@ This repository contains the code and Helm charts required to deploy the resourc
 - Email notifications for release deletions
 - Easy deployment using Helm charts
 
-By leveraging this Helm Release Resource Optimizer, organizations can efficiently manage their Helm releases, ensure resource efficiency, and enhance cost-effectiveness in their Kubernetes environments.
+By leveraging this Helm Iddle Cleanup Cronjob, organizations can efficiently manage their Helm releases, ensure resource efficiency, and enhance cost-effectiveness in their Kubernetes environments.
