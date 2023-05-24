@@ -1,9 +1,9 @@
-FROM python:3.9
+FROM python:3.8-alpine
 
 WORKDIR /app
 
 COPY . /app
 
-RUN pip install prometheus-api-client
+RUN pip install -r requirements.txt
 
-CMD ["python", "helm_iddle_cleaner.py"]
+CMD ["python", "src/helm_iddle_cleaner.py"]
