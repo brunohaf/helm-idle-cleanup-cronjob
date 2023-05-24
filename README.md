@@ -9,7 +9,7 @@ This repository contains the code and Helm charts required to deploy the resourc
 - Automated removal of inactive Helm releases
 - Resource optimization and cost savings
 - Integration with Prometheus for release activity monitoring
-- Email notifications for release deletions
+- Seq logging for release deletions
 - Easy deployment using Helm charts
 
 By leveraging this Helm Iddle Cleanup Cronjob, organizations can efficiently manage their Helm releases, ensure resource efficiency, and enhance cost-effectiveness in their Kubernetes environments.
