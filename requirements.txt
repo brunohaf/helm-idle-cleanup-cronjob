@@ -1,0 +1,2 @@
+prometheus-api-client==0.5.3
+seqlog==0.3.26
