@@ -1,8 +1,8 @@
 {
     "cronjob":{
         "team_label_targets":[
-            "bolt",
-            "solutions-lab"
+            "team1",
+            "team2"
         ]
     },
     "prometheus": {
