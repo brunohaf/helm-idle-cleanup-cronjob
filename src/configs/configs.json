@@ -1,0 +1,17 @@
+{
+    "cronjob":{
+        "team_label_targets":[
+            "bolt",
+            "solutions-lab"
+        ]
+    },
+    "prometheus": {
+        "prometheus_server_url": "http://prometheus:9090",
+        "requests_query": "sum(increase(http_requests_received_total{{job=\"{release}\"}}[2w]))"
+    },
+    "seq": {
+        "server_url": "{{server-url}}",
+        "api_key": "{{api-key}}",
+        "batch_size": 2
+    }
+}
