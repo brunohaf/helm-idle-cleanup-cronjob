@@ -9,16 +9,9 @@ RUN apk add --no-cache \
     musl-dev \
     libffi-dev \
     gcc \
-    g++ && \
-    apk add -U tzdata && \
-    cp /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && \
-    date
+    g++
 
 RUN pip install pip pipenv --upgrade && \ 
     PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
-
-# RUN pip install pipenv --upgrade && \
-#     pipenv install && \
-#     pipenv sync --system
 
 CMD ["pipenv","run", "python", "src/helm_iddle_cleaner.py"]
