@@ -1,7 +1,8 @@
 from configs import Configs
-from prometheus_api_client import PrometheusConnect
+from services import PrometheusClient
 from subprocess import run
-import seqlog, logging
+from pygelf import GelfUdpHandler
+import logging
 import json
 
 # Configuration
@@ -12,11 +13,11 @@ allowed_teams = configs.cronjob.teams
 
 # Prometheus Settings
 prometheus_configs = configs.prometheus
-prometheus = PrometheusConnect(url=prometheus_configs.server_url)
+prometheus = PrometheusClient(url=prometheus_configs.server_url)
 
 #Seq Settings
-seqlog(server_url=configs.seq.server_url, api_key=configs.seq.api_key, bach_size=configs.seq.batch_size)
 logger = logging.getLogger()
+logger.addHandler(GelfUdpHandler(host=configs.seq.server_url, port=12201))
 
 # Fetches Helm releases
 helm_releases = run(["helm", "list", "--short"], capture_output=True, text=True).stdout.strip().split("\n")
