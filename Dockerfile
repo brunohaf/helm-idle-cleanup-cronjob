@@ -23,4 +23,4 @@ RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -
 RUN pip install pip pipenv --upgrade && \ 
     PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
 
-CMD ["pipenv","run", "python", "src/helm_iddle_cleaner.py"]
+CMD ["pipenv","run", "python", "src/helm_idle_cleaner.py"]

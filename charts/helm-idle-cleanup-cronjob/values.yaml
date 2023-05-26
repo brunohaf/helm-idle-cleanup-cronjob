@@ -1,5 +1,5 @@
 image:
-  repository: <docker-repo>/helm-iddle-cleanup-cronjob
+  repository: <docker-repo>/helm-idle-cleanup-cronjob
   tag: <tag>
 
 cronjob:
