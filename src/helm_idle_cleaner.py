@@ -38,8 +38,8 @@ for release in helm_releases:
             # run(["helm", "delete", release])
             
             # Logs purge event on Seq
-            logger.warning(f"[Helm Iddle Cleanup Cronjob] The Helm release {release} was purged due to application inativity (lack of requests in the last 2 weeks).")
+            logger.warning(f"[Helm Idle Cleanup Cronjob] The Helm release {release} was purged due to application inativity (lack of requests in the last 2 weeks).")
     except Exception as ex:
-        logger.error(f"[Helm Iddle Cleanup Cronjob] An error occurred while processing the release [{release}], error message:  {str(ex)}).")
+        logger.error(f"[Helm Idle Cleanup Cronjob] An error occurred while processing the release [{release}], error message:  {str(ex)}).")
     finally:
         continue
