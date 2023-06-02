@@ -1,7 +1,7 @@
 from configs import Configs
 from services import PrometheusClient
 from subprocess import run
-#from pygelf import GelfUdpHandler
+from pygelf import GelfUdpHandler
 import logging
 import json
 
@@ -16,9 +16,9 @@ prometheus = PrometheusClient(url=configs.prometheus.server_url)
 logging_configs = configs.seq
 logging_templates = logging_configs.templates
 logger = logging.getLogger()
-#logger.addHandler(GelfUdpHandler(
-#    host=logging_configs.server_url,
-#    port=logging_configs.port))
+logger.addHandler(GelfUdpHandler(
+    host=logging_configs.server_url,
+    port=logging_configs.port))
 
 # List elegible deployments
 allowed_list_command = ["kubectl", "get", "deployments","--no-headers" ,"-l", f'team in ({",".join(configs.cronjob.teams)})', "-o", "custom-columns=:metadata.name,:metadata.labels.team"]
