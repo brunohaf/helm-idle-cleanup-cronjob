@@ -1,5 +1,6 @@
 {
     "cronjob":{
+        "namespace": "default",
         "team_label_targets":[
             "team1",
             "team2"
