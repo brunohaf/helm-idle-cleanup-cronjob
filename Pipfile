@@ -4,13 +4,24 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+cachetools = "*"
 certifi = "*"
 charset-normalizer = "*"
+google-auth = "*"
 idna = "*"
+kubernetes = "==26.1.0"
+oauthlib = "*"
+pyasn1 = "*"
+pyasn1-modules = "*"
 pygelf = "==0.4.2"
+python-dateutil = "*"
+pyyaml = "*"
 requests = "==2.31.0"
-kubernetes = "*"
+requests-oauthlib = "*"
+rsa = "*"
+six = "*"
 urllib3 = "*"
+websocket-client = "*"
 
 [dev-packages]
 
