@@ -7,8 +7,8 @@ import logging
 # Configuration
 configs = Configs()
 
-# Kubernetes Settings
-k8s_config.load_kube_config() # k8s_config.load_incluster_config()
+# Kubernetes Settings (use k8s_config.load_kube_config() locally)
+k8s_config.load_incluster_config()
 k8s_client_instance = client.AppsV1Api(k8s_config.new_client_from_config())
 
 # Prometheus Settings
