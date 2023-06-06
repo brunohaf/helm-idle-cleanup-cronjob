@@ -9,6 +9,7 @@ charset-normalizer = "*"
 idna = "*"
 pygelf = "==0.4.2"
 requests = "==2.31.0"
+kubernetes = "*"
 urllib3 = "*"
 
 [dev-packages]
