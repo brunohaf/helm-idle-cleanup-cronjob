@@ -1,17 +1,15 @@
 from configs import Configs
 from services import PrometheusClient
 from kubernetes import client, config as k8s_config
-from subprocess import run
 from pygelf import GelfUdpHandler
 import logging
-import json
 
 # Configuration
 configs = Configs()
 
 # Kubernetes Settings
-k8s_config.load_incluster_config()
-k8s_client = client.CoreV1Api()
+k8s_config.load_kube_config() # k8s_config.load_incluster_config()
+k8s_client_instance = client.AppsV1Api(k8s_config.new_client_from_config())
 
 # Prometheus Settings
 query_configs = configs.prometheus.query
@@ -26,13 +24,15 @@ logger.addHandler(GelfUdpHandler(
     port=logging_configs.port))
 
 # List elegible deployments
-allowed_list_command = ["kubectl", "get", "deployments","--no-headers" ,"-l", f'team in ({",".join(configs.cronjob.teams)})', "-o", "custom-columns=:metadata.name,:metadata.labels.team"]
-# -v9
-allowed_list_resp = k8s_client.list_namespaced_deployment(namespace="app", label_selector=f'team in ({",".join(configs.cronjob.teams)})')
+allowed_list_resp = k8s_client_instance.list_namespaced_deployment(
+    namespace=configs.cronjob.namespace,
+    label_selector=f'team in ({",".join(configs.cronjob.teams)})')
 
-allowed_list_command_output = run(allowed_list_command, capture_output=True, text=True)
-allowed_list_raw = [e for e in allowed_list_command_output.stdout.split("\n") if e.strip()]
-allowed_list = list(map(lambda item: {"release": item.split()[0], "team": item.split()[1]}, allowed_list_raw))
+allowed_list = list(map(
+    lambda deployment: {
+        "release": deployment.metadata.name,
+        "team": deployment.metadata.labels.get("team")
+        }, allowed_list_resp.items))
 
 # Get from Prometheus the list of ingress with requests in the last 2 weeks
 requests_query = query_configs.template.format(
@@ -42,6 +42,7 @@ requests_query = query_configs.template.format(
 
 query_result = prometheus.custom_query(requests_query)
 to_be_purged = []
+
 for ingress in query_result:
     try:
         metric = ingress.get('metric', None)
