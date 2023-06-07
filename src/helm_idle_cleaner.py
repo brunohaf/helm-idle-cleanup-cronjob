@@ -1,7 +1,7 @@
 from configs import Configs
 from services import PrometheusClient
 from kubernetes import client, config as k8s_config
-from azure.storage.fileshare import ShareFileClient, ShareDirectoryClient
+from azure.storage.fileshare import ShareFileClient
 from datetime import datetime
 from pygelf import GelfUdpHandler
 import json
