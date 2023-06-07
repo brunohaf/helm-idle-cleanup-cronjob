@@ -12,6 +12,7 @@ spec:
       template:
         spec:
           restartPolicy: OnFailure
+          serviceAccountName: <serviceAccountName>
           containers:
             - name: helm-idle-cleanup-cronjob
               image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
