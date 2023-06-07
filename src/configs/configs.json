@@ -23,6 +23,12 @@
             "purging_message": "[Helm Idle Cleanup Cronjob] The Helm release [{subject}] will be purged soon due to application inativity (lack of requests in the last 2 weeks).",
             "error_message": "[Helm Idle Cleanup Cronjob] An error occurred while checking inativity of [ingress={ingress}], error message:  {ex_message})."
         }
+    },    
+    "azure_fileshare": {
+        "connection_string": "{{connection_string}}",
+        "share_name": "{{share_name}}",
+        "filename_template": "helm_idle_releases_cronjob/{file_name}.json",
+        "filename_date_format": "%Y%m%d"
     }
 }
 
