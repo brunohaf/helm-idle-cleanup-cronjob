@@ -1,9 +1,20 @@
 image:
-  repository: <docker-repo>/helm-idle-cleanup-cronjob
-  tag: <tag>
-
+  repository: <repo>
+  tag: 1.0.2
+  pullPolicy: IfNotPresent
+  imagePullSecretName: <secret>
+imagePullSecrets: []
 cronjob:
   schedule: "0 10 * * 2"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
+
+authorization: 
+  serviceAccountName: <serviceAccountName>
+
+nodeSelector: {}
+annotations: {}
+tolerations: []
+affinity: {}
+secrets: {}
