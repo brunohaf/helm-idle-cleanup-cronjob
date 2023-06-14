@@ -1,8 +1,9 @@
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: helm-idle-cleanup-cronjob
 spec:
+  timeZone: {{ .Values.cronjob.timeZone }}
   schedule: {{ .Values.cronjob.schedule }}
   concurrencyPolicy: {{ .Values.cronjob.concurrencyPolicy }}
   successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
@@ -12,12 +13,14 @@ spec:
       template:
         spec:
           restartPolicy: OnFailure
-          serviceAccountName: <serviceAccountName>
+          serviceAccountName: {{ .Values.authorization.serviceAccountName }}
+          imagePullSecrets:
+            - name: {{ .Values.image.imagePullSecretName }}
           containers:
-            - name: helm-idle-cleanup-cronjob
-              image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+            - name: {{ .Chart.Name }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
               imagePullPolicy: IfNotPresent
               command:
                 - "python"
               args:
-                - "helm_idle_cleaner.py"
+                - "src/helm_idle_cleaner.py"
