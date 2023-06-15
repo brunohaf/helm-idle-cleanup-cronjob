@@ -27,7 +27,8 @@
     "azure_fileshare": {
         "connection_string": "{{connection_string}}",
         "share_name": "{{share_name}}",
-        "filename_template": "helm_idle_releases_cronjob/{file_name}.json",
+        "filename_template": "idle-releases_hmg-bots-aks-cluster/{file_name}.json",
+        "nodes_snapshot_filename_template": "nodes_snapshot_hmg-bots-aks-cluster/{file_name}.json",
         "filename_date_format": "%Y%m%d"
     }
 }

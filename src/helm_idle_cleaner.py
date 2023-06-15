@@ -1,16 +1,14 @@
 from configs import Configs
-from services import PrometheusClient
+from services import PrometheusClient, AzureShareFileService
 from kubernetes import client, config
-from azure.storage.fileshare import ShareFileClient
 from datetime import datetime
 from pygelf import GelfUdpHandler
-import json
 import logging
 
 # Configuration.
 configs = Configs()
 
-# Kubernetes Settings (use k8s_config.load_kube_config() locally).
+# Kubernetes Settings (use config.load_kube_config() locally).
 config.load_incluster_config()
 k8s_client_instance = client.AppsV1Api()
 
@@ -29,7 +27,8 @@ logger.addHandler(GelfUdpHandler(
 # Azure File Share Settings.
 file_share_configs = configs.azure_fileshare
 today = datetime.now().strftime(file_share_configs.filename_date_format)
-file_name = file_share_configs.filename_template.format(file_name=today)
+file_path = file_share_configs.filename_template.format(file_name=today)
+nodes_snapshot_file_path = file_share_configs.nodes_snapshot_filename_template.format(file_name=today)
 
 # List elegible deployments.
 allowed_list_resp = k8s_client_instance.list_namespaced_deployment(
@@ -64,17 +63,40 @@ for ingress in query_result:
 
         if(is_idle and is_elegible):
             to_be_purged.append(subject_data)
-            logger.warning(logging_templates.purging_message.format(subject=subject_name))
+            logger.warning(logging_templates.purging_message.format(subject=subject_name, team=subject_data["team"]))
 
     except Exception as ex:
         logger.error(logging_templates.purging_message.format(ingress=subject_name, ex_message=str(ex)))
     finally:
         continue
 
-# Uploads releases list to be purged on Azure File Share.
-azure_file_client = ShareFileClient.from_connection_string(
-    conn_str=file_share_configs.conn_str,
-    share_name=file_share_configs.share_name,
-    file_path=file_name)
 
-azure_file_client.upload_file(json.dumps(to_be_purged))
+# Uploads releases list to be purged on Azure File Share.
+azure_file_client = AzureShareFileService(
+    conn_str=file_share_configs.conn_str,
+    share_name=file_share_configs.share_name)
+
+azure_file_client.upload_json_file(
+    file_path=file_path,
+    file=to_be_purged)
+
+# Uploads nodes allocated/capacity snapshot to Azure File Share.
+nodes = client.CoreV1Api().list_node().items
+nodes_snapshot = []
+
+for node in nodes:
+    nodes_snapshot.append({
+        'NodeName': node.metadata.name,
+        'Allocated': {
+            'cpu': node.status.allocatable['cpu'],
+            'memory':  node.status.allocatable['memory']
+        },
+        'Capacity': {
+            'cpu': node.status.capacity['cpu'],
+            'memory':  node.status.capacity['memory']
+        }
+    })
+
+azure_file_client.upload_json_file(
+    file_path=nodes_snapshot_file_path,
+    file=nodes_snapshot)
