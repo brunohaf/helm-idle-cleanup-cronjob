@@ -1,9 +1,28 @@
 image:
-  repository: <docker-repo>/helm-idle-cleanup-cronjob
-  tag: <tag>
-
+  fullnameOverride: helm-idle-cleanup-cronjob
+  repository: helm-idle-cleanup-cronjob
+  tag: #{Build.BuildId}#
+  pullPolicy: IfNotPresent
+  imagePullSecretName: <image-pull-secret>
+imagePullSecrets: []
 cronjob:
-  schedule: "0 10 * * 2"
+  schedule: #{scheduleQuery}#
+  timeZone:	"America/Sao_Paulo"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
+
+authorization: 
+  serviceAccountName: <service-account-name>
+
+configs:
+  configMap: helm-idle-cleanup-cronjob
+  path: /app/src/configs/configs.json
+  subPath: configs.json
+
+team: <team-label>
+nodeSelector: {}
+annotations: {}
+tolerations: []
+affinity: {}
+secrets: {}
