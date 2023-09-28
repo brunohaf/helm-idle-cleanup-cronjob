@@ -1,26 +1,35 @@
-FROM python:3.10.11-alpine
+FROM python:3.10-alpine as base
 
-WORKDIR /app
+# Setup env
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONFAULTHANDLER 1
 
-COPY . /app
+FROM base AS py-temp
 
-RUN apk --no-cache add \
-    curl \
-    openssl \
-    bash \
+RUN apk add --no-cache \
     libressl-dev \
     musl-dev \
     libffi-dev \
-    gcc \
-    g++
+    gcc && \
+    apk add -U tzdata && \
+    cp /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && \
+    date
 
-RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" \
-    && chmod +x ./kubectl \
-    && mv ./kubectl /usr/local/bin/kubectl \
-    && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
-    && chmod +x get_helm.sh && ./get_helm.sh
+RUN pip install pipenv
 
-RUN pip install pip pipenv --upgrade && \ 
-    PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
+COPY Pipfile .
+COPY Pipfile.lock .
+RUN PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
 
-CMD ["pipenv","run", "python", "src/helm_idle_cleaner.py"]
+
+FROM base AS runtime
+
+COPY --from=py-temp /.venv /.venv
+ENV PATH="/.venv/bin:$PATH"
+
+WORKDIR /app
+COPY . /app
+
+CMD ["python", "src/helm_idle_cleaner.py"]

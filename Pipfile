@@ -4,12 +4,31 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+azure-core = "*"
+azure-storage-file-share = "==12.12.0"
+cachetools = "*"
 certifi = "*"
+cffi = "*"
 charset-normalizer = "*"
+cryptography = "*"
+google-auth = "*"
 idna = "*"
+isodate = "*"
+kubernetes = "==26.1.0"
+oauthlib = "*"
+pyasn1 = "*"
+pyasn1-modules = "*"
+pycparser = "*"
 pygelf = "==0.4.2"
+python-dateutil = "*"
+pyyaml = "*"
 requests = "==2.31.0"
+requests-oauthlib = "*"
+rsa = "*"
+six = "*"
+typing-extensions = "*"
 urllib3 = "*"
+websocket-client = "*"
 
 [dev-packages]
 

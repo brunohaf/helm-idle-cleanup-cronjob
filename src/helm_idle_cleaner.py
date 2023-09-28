@@ -1,45 +1,102 @@
 from configs import Configs
-from services import PrometheusClient
-from subprocess import run
-from pygelf import GelfUdpHandler
+from services import PrometheusClient, AzureShareFileService
+from kubernetes import client, config
+from datetime import datetime
+from pygelf import GelfHttpHandler
 import logging
-import json
 
-# Configuration
+# Configuration.
 configs = Configs()
 
-# Cronjob Settings
-allowed_teams = configs.cronjob.teams
+# Kubernetes Settings (use config.load_kube_config() locally).
+config.load_incluster_config()
+k8s_client_instance = client.AppsV1Api()
 
-# Prometheus Settings
-prometheus_configs = configs.prometheus
-prometheus = PrometheusClient(url=prometheus_configs.server_url)
+# Prometheus Settings.
+query_configs = configs.prometheus.query
+prometheus = PrometheusClient(url=configs.prometheus.server_url)
 
-#Seq Settings
+#Seq Settings.
+logging_configs = configs.seq
+logging_templates = logging_configs.templates
 logger = logging.getLogger()
-logger.addHandler(GelfUdpHandler(host=configs.seq.server_url, port=12201))
+logger.addHandler(GelfHttpHandler(
+    host=logging_configs.server_url,
+    port=logging_configs.port))
 
-# Fetches Helm releases
-helm_releases = run(["helm", "list", "--short"], capture_output=True, text=True).stdout.strip().split("\n")
+# Azure File Share Settings.
+file_share_configs = configs.azure_fileshare
+today = datetime.now().strftime(file_share_configs.filename_date_format)
+file_path = file_share_configs.filename_template.format(file_name=today)
+nodes_snapshot_file_path = file_share_configs.nodes_snapshot_filename_template.format(file_name=today)
 
-for release in helm_releases:
+# List elegible deployments.
+allowed_list_resp = k8s_client_instance.list_namespaced_deployment(
+    namespace=configs.cronjob.namespace,
+    label_selector=f'team in ({",".join(configs.cronjob.teams)})')
+
+allowed_list = list(map(
+    lambda deployment: {
+        "release": deployment.metadata.name,
+        "team": deployment.metadata.labels.get("team")
+        }, allowed_list_resp.items))
+
+# Get from Prometheus the list of ingress with requests in the last 2 weeks.
+requests_query = query_configs.template.format(
+    metric=query_configs.metric,
+    component=query_configs.component,
+    time_range=query_configs.time_range)
+
+query_result = prometheus.custom_query(requests_query)
+to_be_purged = []
+
+# List releases to be purged.
+for ingress in query_result:
     try:
-        # Checks if the release is from a target team
-        release_values = json.loads(run(["helm", "get", "values", release, "-o", "json"], capture_output=True, text=True).stdout)
-        if not("team" in release_values and release_values["team"] in allowed_teams):
-            continue
+        metric = ingress.get('metric', None)
+        request_rate = ingress.get('value', None)
+        subject_name = metric.get('ingress', '')
+        subject_data = next((e for e in allowed_list if e['release'] == subject_name), None)
 
-        # Checks if there have been requests in the last 2 weeks
-        requests_query = prometheus_configs.requests_query.format(release=release)
-        requests_result = prometheus.custom_query(requests_query)
+        is_idle = request_rate is not None and request_rate[1] == "0"
+        is_elegible = subject_data is not None
 
-        if len(requests_result) != 0 and requests_result[0]["value"][1] == "0":
-            # Deletes Helm release
-            # run(["helm", "delete", release])
-            
-            # Logs purge event on Seq
-            logger.warning(f"[Helm Idle Cleanup Cronjob] The Helm release {release} was purged due to application inativity (lack of requests in the last 2 weeks).")
+        if(is_idle and is_elegible):
+            to_be_purged.append(subject_data)
+            logger.warning(logging_templates.purging_message.format(subject=subject_name, team=subject_data["team"]))
+
     except Exception as ex:
-        logger.error(f"[Helm Idle Cleanup Cronjob] An error occurred while processing the release [{release}], error message:  {str(ex)}).")
+        logger.error(logging_templates.purging_message.format(ingress=subject_name, ex_message=str(ex)))
     finally:
         continue
+
+
+# Uploads releases list to be purged on Azure File Share.
+azure_file_client = AzureShareFileService(
+    conn_str=file_share_configs.conn_str,
+    share_name=file_share_configs.share_name)
+
+azure_file_client.upload_json_file(
+    file_path=file_path,
+    file=to_be_purged)
+
+# Uploads nodes allocated/capacity snapshot to Azure File Share.
+nodes = client.CoreV1Api().list_node().items
+nodes_snapshot = []
+
+for node in nodes:
+    nodes_snapshot.append({
+        'NodeName': node.metadata.name,
+        'Allocated': {
+            'cpu': node.status.allocatable['cpu'],
+            'memory':  node.status.allocatable['memory']
+        },
+        'Capacity': {
+            'cpu': node.status.capacity['cpu'],
+            'memory':  node.status.capacity['memory']
+        }
+    })
+
+azure_file_client.upload_json_file(
+    file_path=nodes_snapshot_file_path,
+    file=nodes_snapshot)
