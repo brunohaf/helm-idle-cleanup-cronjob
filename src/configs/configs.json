@@ -1,17 +1,32 @@
 {
     "cronjob":{
-        "team_label_targets":[
-            "team1",
-            "team2"
-        ]
+        "namespace": "default",
+        "team_label_targets":"#{helmIdleCleanupCronjob-targetTeamLabels}#"
     },
     "prometheus": {
-        "prometheus_server_url": "http://prometheus:9090",
-        "requests_query": "sum(increase(http_requests_received_total{{job=\"{release}\"}}[2w]))"
+        "prometheus_server_url": "#{helmIdleCleanupCronjob-prometheusServerUrl}#",
+        "query": {
+            "metric": "nginx_ingress_controller_requests",
+            "component": "ingress",
+            "time_range": "3w",
+            "template": "sum(increase({metric}{{{component}=~\".*\"}}[{time_range}])) by ({component})" 
+        }  
     },
     "seq": {
-        "server_url": "{{server-url}}",
-        "api_key": "{{api-key}}",
-        "batch_size": 2
+        "server_url": "#{helmIdleCleanupCronjob-seqServerUrl}#",
+        "api_key": "#{helmIdleCleanupCronjob-seQApiKey}#",
+        "port": 5341,
+        "log_templates": {
+            "purging_message": "[Helm Idle Cleanup Cronjob] The Helm release [{subject}] will be purged soon due to application inativity (lack of requests in the last 2 weeks).",
+            "error_message": "[Helm Idle Cleanup Cronjob] An error occurred while checking inativity of [ingress={ingress}], error message:  {ex_message})."
+        }
+    },    
+    "azure_fileshare": {
+        "connection_string": "#{helmIdleCleanupCronjob-fileshareConnectionString}#",
+        "share_name": "#{helmIdleCleanupCronjob-fileshareName}#",
+        "filename_template": "idle-releases_hmg-bots-aks-cluster/{file_name}.json",
+        "nodes_snapshot_filename_template": "nodes_snapshot_hmg-bots-aks-cluster/{file_name}.json",
+        "filename_date_format": "%Y%m%d"
     }
 }
+
